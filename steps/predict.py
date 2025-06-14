@@ -17,8 +17,18 @@ class Predictor:
         return joblib.load(model_file_path)
 
     def feature_target_separator(self, data):
+        # 欠損値のチェック
+        if data.iloc[:, -1].isnull().any():
+            print("警告: ターゲット変数に欠損値が存在します")
+            # 欠損値を持つ行を削除
+            data = data.dropna(subset=[data.columns[-1]])
+        
         X = data.iloc[:, :-1]
         y = data.iloc[:, -1]
+        
+        # 欠損値が完全に除去されたことを確認
+        assert not y.isnull().any(), "ターゲット変数に欠損値が残っています"
+        
         return X, y
 
     def evaluate_model(self, X_test, y_test):

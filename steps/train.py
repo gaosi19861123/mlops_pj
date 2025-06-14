@@ -1,7 +1,7 @@
 import os
 import joblib
 import yaml
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler, FunctionTransformer
 from sklearn.compose import ColumnTransformer
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline 
@@ -17,7 +17,11 @@ class Trainer:
         self.pipeline = self.create_pipeline()
 
     def load_config(self):
-        with open('config.yml', 'r') as config_file:
+        # プロジェクトのルートディレクトリを取得
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = os.path.join(project_root, 'config.yml')
+        
+        with open(config_path, 'r') as config_file:
             return yaml.safe_load(config_file)
         
     def create_pipeline(self):
@@ -34,7 +38,7 @@ class Trainer:
             'DecisionTreeClassifier': DecisionTreeClassifier,
             'GradientBoostingClassifier': GradientBoostingClassifier
         }
-    
+
         model_class = model_map[self.model_name]
         model = model_class(**self.model_params)
 
@@ -47,8 +51,18 @@ class Trainer:
         return pipeline
 
     def feature_target_separator(self, data):
+        # 欠損値のチェック
+        if data.iloc[:, -1].isnull().any():
+            print("警告: ターゲット変数に欠損値が存在します")
+            # 欠損値を持つ行を削除
+            data = data.dropna(subset=[data.columns[-1]])
+        
         X = data.iloc[:, :-1]
         y = data.iloc[:, -1]
+        
+        # 欠損値が完全に除去されたことを確認
+        assert not y.isnull().any(), "ターゲット変数に欠損値が残っています"
+        
         return X, y
 
     def train_model(self, X_train, y_train):

@@ -1,12 +1,17 @@
 import pandas as pd
 import yaml
+import os
 
 class Ingestion:
     def __init__(self):
         self.config = self.load_config()
 
     def load_config(self):
-        with open("config.yml", "r") as file:
+        # プロジェクトのルートディレクトリを取得
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = os.path.join(project_root, 'config.yml')
+        
+        with open(config_path, 'r') as file:
             return yaml.safe_load(file)
 
     def load_data(self):
